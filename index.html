@@ -223,6 +223,7 @@ tr[data-k]:hover td,tr[data-k]:focus-visible td{background:var(--sky-tint)}
           <label class="field"><span>Largura</span><input type="number" id="l" min="20" step="0.5" inputmode="decimal"></label>
           <label class="field"><span>Altura</span><input type="number" id="a" min="20" step="0.5" inputmode="decimal"></label>
         </div>
+        <div class="row start" id="shipEx" hidden><span class="note">Artes validadas:</span><button class="btn" type="button" data-ex="master">Master 166 × 103 × 150</button><button class="btn" type="button" data-ex="transp">Transporte 348 × 328 × 320</button></div>
         <p class="ferr" id="dimErr" hidden>Cada medida precisa ter pelo menos 20 mm.</p>
         <label class="field"><span>As medidas digitadas são</span><select id="medida"><option value="externa">Externas (tamanho da face impressa)</option><option value="interna">Internas da faca</option></select></label>
         <label class="field" id="espBox"><span>Espessura do papelão (mm)</span><input type="number" id="esp" min="0.2" step="0.1"></label>
@@ -231,7 +232,8 @@ tr[data-k]:hover td,tr[data-k]:focus-visible td{background:var(--sky-tint)}
 
       <section class="sec">
         <h2>Produto</h2>
-        <label class="field"><span>Nome do produto</span><input type="text" id="nome"></label>
+        <label class="field"><span id="nomeLabel">Nome do produto</span><input type="text" id="nome"></label>
+        <label class="field" id="nome2Box" hidden><span>Nome – linha 2 (regular)</span><input type="text" id="nome2" placeholder="ex.: Infravermelho"></label>
         <label class="check"><input type="checkbox" id="caps"> Nome em caixa-alta, como nas embalagens do brandbook</label>
         <div class="two" id="opts-master-prod" hidden>
           <label class="field"><span>Variação / tamanho</span><input type="text" id="var" placeholder="deixe vazio se não houver"></label>
@@ -274,7 +276,7 @@ tr[data-k]:hover td,tr[data-k]:focus-visible td{background:var(--sky-tint)}
         <h2>Áreas reservadas</h2>
         <label class="check"><input type="checkbox" id="inmetro"> Selo Inmetro (certificação compulsória)</label>
         <label class="check"><input type="checkbox" id="udi"> Área UDI 50 × 20 mm</label>
-        <label class="check"><input type="checkbox" id="etq"> Etiqueta de transportadora</label>
+        <label class="check"><input type="checkbox" id="etq"> <span id="etqLabel">Etiqueta de transportadora</span></label>
         <div class="two" id="etqDims">
           <label class="field"><span>Etiqueta – largura</span><input type="number" id="etqW" min="20" step="1"></label>
           <label class="field"><span>Etiqueta – altura</span><input type="number" id="etqH" min="20" step="1"></label>
@@ -599,20 +601,41 @@ const TYPES={
     start:{c:780,l:280,a:830,medida:"externa",esp:4,nome:"Cadeira de Banho D100 Light",caps:true,var:"",qtd:1,sku:"",gtin:"",acab:"branco",namePos:"auto",nben:4,benStyle:"pilula",medpro:true,destaque:"",garantia:"",codeMode:"itf",cdW:100,cdH:50,inmetro:false,udi:false,etq:false,etqW:100,etqH:150,legal:"",drive:""}
   },
   master:{
-    extra:[["sym","Símbolo central (% da altura)",12,0.5],["symMin","Símbolo mín. (mm)",8,1],["symMax","Símbolo máx. (mm)",80,1],["nameK","Nome: maiúscula (% do símbolo)",35,1],["sideK","Nome na lateral (% da frente)",70,5],["magITF","ITF-14: tamanho (%)",62.5,2.5]],
-    over:{marg:5.5,margMin:6,picto:8,cuid:18},
-    start:{c:420,l:340,a:330,medida:"externa",esp:4,nome:"Tala Rizartrose",caps:false,var:"Tamanho P/M",qtd:60,sku:"",gtin:"",acab:"kraft",namePos:"auto",nben:4,benStyle:"pilula",medpro:false,destaque:"",garantia:"",codeMode:"itf",cdW:100,cdH:50,inmetro:false,udi:true,etq:true,etqW:100,etqH:150,legal:"",drive:""}
+    /* Regra de embarque (master e transporte), calibrada nas artes validadas do Termômetro Infravermelho.
+       b = menor lado da face. Cada elemento é % de b com um mínimo; os mínimos seguram a leitura nas caixas pequenas. */
+    params:[
+      ["marg","Margem (% do menor lado)",6.25,0.25],["margMin","Margem mínima (mm)",8,0.5],
+      ["logoH","Logo: altura (% do menor lado)",7.3,0.1],["logoMin","Logo: altura mínima (mm)",12,0.5],
+      ["etqPct","Área de etiqueta (% do menor lado)",25,1],["etqMin","Área de etiqueta mínima (mm)",40,1],
+      ["sym","Símbolo D (% da altura da face)",12.3,0.1],["symMin","Símbolo D mínimo (mm)",19.5,0.5],
+      ["nameK","Nome linha 1: corpo (% do símbolo D)",47.6,0.5],["name2K","Nome linha 2: corpo (% da linha 1)",85,1],["sideK","Nome na lateral (% da frente)",74,1],
+      ["bc","Bloco de código: largura (% do menor lado)",25,0.5],["bcMin","Bloco de código: largura mínima (mm)",45,1],
+      ["picto","Pictograma (% do menor lado)",7,0.1],["pictoMin","Pictograma mínimo (mm)",13,0.5],
+      ["cuid","Selo CUIDADO: largura (% do menor lado)",11,0.5],["cuidMin","Selo CUIDADO: largura mínima (mm)",20,1],
+      ["legal","Texto legal: pt = menor lado × %",5,0.5],["legalMin","Texto legal mínimo (pt)",6,0.5],["legalMax","Texto legal máximo (pt)",12,0.5],
+      ["narrow","Lateral estreita abaixo de (mm)",150,5],["itfMin","ITF-14: avisar abaixo de (%)",25,2.5]
+    ],
+    over:{},
+    start:{c:348,l:328,a:320,medida:"externa",esp:4,nome:"Termômetro",nome2:"Infravermelho",caps:false,var:"",qtd:48,sku:"0001000454",gtin:"",acab:"kraft",namePos:"auto",nben:4,benStyle:"pilula",medpro:false,destaque:"",garantia:"",codeMode:"itf",cdW:100,cdH:50,inmetro:true,udi:true,etq:true,etqW:100,etqH:150,legal:"",drive:""}
   }
 };
+const PARAMS=t=>t==="master"?TYPES.master.params:[...COMMON,...TYPES.unitaria.extra];
+const RULES_V={unitaria:1,master:2};
+const rulesOk=(rec,t)=>t!=="master"||(rec&&rec.regrasV===2);
 /* caixas salvas antes desta versão: o que faltar assume o comportamento antigo */
-const LEGACY={medida:"externa",esp:4,caps:false,sku:"",gtin:"",namePos:"auto",benStyle:"circulo",medpro:false,destaque:"",garantia:"",codeMode:"itf",cdW:100,cdH:50};
+const LEGACY={nome2:"",medida:"externa",esp:4,caps:false,sku:"",gtin:"",namePos:"auto",benStyle:"circulo",medpro:false,destaque:"",garantia:"",codeMode:"itf",cdW:100,cdH:50};
 const LEGAL_SAMPLE={
   unitaria:"Detentor do registro: Dellamed S.A. – CNPJ 00.000.000/0000-00 – IE 000/0000000. AFE ANVISA nº 0.00000-0. Responsável técnico: Nome do responsável – CRF-RS 00000. Endereço: Rua Exemplo, 000 – Bairro – Caxias do Sul/RS – CEP 00000-000. SAC: 0800 000 0000.\nFabricante: Nome do fabricante – endereço completo – país de origem.\nRegistro ANVISA nº 00000000000. Data de fabricação, lote e validade: ver bloco de código. Leia o manual de instruções antes de usar. Armazene em local seco e arejado, longe da luz solar.",
-  master:"Data de fabricação, lote e validade: ver bloco de código. Registro ANVISA nº 00000000000.\nDetentor do registro: Dellamed S.A. – CNPJ 00.000.000/0000-00. AFE ANVISA nº 0.00000-0. Responsável técnico: Nome do responsável – CRF-RS 00000. SAC: 0800 000 0000. Endereço: Rua Exemplo, 000 – Caxias do Sul/RS. País de origem: informar."
+  master:"Registro Anvisa: 00000000000\nData de Fabricação: MMM/YYYY\nValidade: informar\n\nDetentor do registro: Dellamed S.A.\n\nCNPJ 11.666.105/0001-09 IE 0290519179\nNº de AFE ANVISA: 8.07959-5\nResponsável Técnica: informar\n\nAtendimento ao Consumidor: 0800.604.8008\nassistenciatecnica@dellamed.com.br\n\nEndereço: Rua Henrique Rech, 312 - Bairro Sanvitto II, Cinquentenário\nCEP 95012-613 - Caxias do Sul/RS - Brasil\n\nFabricado por: informar\nEndereço Fabricante: informar"
 };
-TYPES.unitaria.start.legal=LEGAL_SAMPLE.unitaria;TYPES.master.start.legal=LEGAL_SAMPLE.master;
+const THERMO_LEGAL="Registro Anvisa: 80795959004\nData de Fabricação: MMM/YYYY\nValidade: Indeterminada\n\nDetentor do registro: Dellamed S.A.\n\nCNPJ 11.666.105/0001-09 IE 0290519179\nNº de AFE ANVISA: 8.07959-5\nResponsável Técnica: Laura Rossato Madalosso\nCREFITO-5/ 443779-F\n\nAtendimento ao Consumidor: 0800.604.8008\nassistenciatecnica@dellamed.com.br\n\nEndereço: Rua Henrique Rech, 312 - Bairro Sanvitto II, Cinquentenário\nCEP 95012-613 - Caxias do Sul/RS - Brasil\n\nFabricado por: Cofoe Medical Technology Co., Ltd\nEndereço Fabricante: No. 87, Section 1, East Huanbao Road, Yuhua District, 410000 Changsha, Hunan, PEOPLE'S REPUBLIC OF CHINA.";
+const SHIP_EX={
+  master:{label:"Master 166 × 103 × 150",c:166,l:103,a:150,medida:"externa",nome:"Termômetro",nome2:"Infravermelho",var:"",qtd:4,sku:"0001000454",gtin:"",caps:false,codeMode:"itf",inmetro:true,udi:true,etq:true,legal:THERMO_LEGAL},
+  transp:{label:"Transporte 348 × 328 × 320",c:348,l:328,a:320,medida:"externa",nome:"Termômetro",nome2:"Infravermelho",var:"",qtd:48,sku:"0001000454",gtin:"",caps:false,codeMode:"itf",inmetro:true,udi:true,etq:true,legal:THERMO_LEGAL}
+};
+TYPES.unitaria.start.legal=LEGAL_SAMPLE.unitaria;TYPES.master.start.legal=THERMO_LEGAL;
 const CODE_DEF={};
-Object.entries(TYPES).forEach(([t,d])=>{CODE_DEF[t]={};[...COMMON,...d.extra].forEach(([k,,v])=>CODE_DEF[t][k]=d.over[k]??v);});
+Object.entries(TYPES).forEach(([t,d])=>{CODE_DEF[t]={};PARAMS(t).forEach(([k,,v])=>CODE_DEF[t][k]=d.over[k]??v);});
 let TEAMDEF=JSON.parse(JSON.stringify(CODE_DEF));
 const PRM=JSON.parse(JSON.stringify(CODE_DEF));
 const FORM={unitaria:{...TYPES.unitaria.start},master:{...TYPES.master.start}};
@@ -837,15 +860,193 @@ function masterFront(W,H,p,inp){
   checkFace(F);return F;
 }
 
+
+/* ---------- caixas de embarque: master e transporte (mesma regra) ---------- */
+const UDI_W=50,UDI_H=20,INM_W=50,INM_H=22.5;
+function shipBase(W,H,p){
+  const b=Math.min(W,H),m=Math.max(p.margMin,b*p.marg/100);
+  const lockH0=b*p.logoH/100,lockH=Math.max(p.logoMin,lockH0),picto=Math.max(p.pictoMin,b*p.picto/100),cuidW=Math.max(p.cuidMin,b*p.cuid/100);
+  let lp=b*p.legal/100;const legalAtMin=lp<=p.legalMin;lp=clamp(lp,p.legalMin,p.legalMax);
+  return {W,H,b,m,lockH,lockW:lockH*LR,logoAtMin:lockH0<p.logoMin,prot:lockH*0.5,etq:Math.max(p.etqMin,b*p.etqPct/100),
+    picto,pgap:picto*0.155,tagH:picto*0.45,stackW:picto*0.866,stackH:picto*1.59,bcW:Math.max(p.bcMin,b*p.bc/100),
+    cuidW,cuidH:cuidW*0.6,stripH:cuidW*0.18,cgap:cuidW*0.085,legalPt:lp,legalAtMin};
+}
+function labelMarks(x,y,s,c){const a=s*0.133,w=f(Math.max(0.25,s*0.006));return `<path d="M${f(x)} ${f(y+a)}V${f(y)}H${f(x+a)}M${f(x+s-a)} ${f(y)}H${f(x+s)}V${f(y+a)}M${f(x+s)} ${f(y+s-a)}V${f(y+s)}H${f(x+s-a)}M${f(x+a)} ${f(y+s)}H${f(x)}V${f(y+s-a)}" fill="none" stroke="${c}" stroke-width="${w}"/>`;}
+function stackIcon(x,y,w,h,c){
+  const sw=f(w*0.06),bx=x+w*0.15,bw=w*0.7,h1=h*0.34,h2=h*0.2,h3=h*0.3,y2=y+h*0.03+h1+h*0.08;
+  return `<rect x="${f(bx)}" y="${f(y+h*0.03)}" width="${f(bw)}" height="${f(h1)}" fill="none" stroke="${c}" stroke-width="${sw}"/><path d="M${f(x)} ${f(y)}L${f(x+w)} ${f(y+h1+h*0.06)}M${f(x)} ${f(y+h1+h*0.06)}L${f(x+w)} ${f(y)}" stroke="${c}" stroke-width="${sw}"/>`+
+    `<rect x="${f(bx)}" y="${f(y2)}" width="${f(bw)}" height="${f(h2)}" fill="none" stroke="${c}" stroke-width="${sw}"/>`+T(x+w/2,y2+h2*0.27,"3",h2*0.46,{w:500,fill:c,anchor:"middle",fam:"body"})+
+    `<rect x="${f(bx)}" y="${f(y+h-h3)}" width="${f(bw)}" height="${f(h3)}" fill="${c}"/>`;
+}
+function shipPictos(x,yb,g,ink,paper){
+  const p=g.picto,x2=x+g.stackW+p*0.35,ty=yb-(p+p*0.12+g.tagH),sw=f(p*0.04),tw2=2*p+g.pgap;
+  let s=stackIcon(x,yb-g.stackH,g.stackW,g.stackH,ink);
+  ["fragil","up"].forEach((k,i)=>{const px=x2+i*(p+g.pgap);s+=`<rect x="${f(px)}" y="${f(ty)}" width="${f(p)}" height="${f(p)}" fill="none" stroke="${ink}" stroke-width="${sw}"/>`+pictoIcon(k,px,ty,p,ink);});
+  const yT=ty+p+p*0.12,label="ITEM PARA SAÚDE";let cap=g.tagH*0.36;const lw=tw(label,cap/CAPR.head,700);if(lw>tw2*0.86)cap*=tw2*0.86/lw;
+  s+=`<rect x="${f(x2)}" y="${f(yT)}" width="${f(tw2)}" height="${f(g.tagH)}" fill="${ink}"/>`+T(x2+tw2/2,yT+(g.tagH-cap)/2,label,cap,{fill:paper,anchor:"middle"});
+  return {svg:s,w:g.stackW+p*0.35+tw2,h:Math.max(g.stackH,p*1.12+g.tagH)};
+}
+function miniIcon(k,x,y,s,c){
+  if(k==="sol"){const cx=x+s/2,cy=y+s/2,r=s*0.17;let d="";for(let i=0;i<8;i++){const a=i*Math.PI/4;d+=`M${f(cx+Math.cos(a)*r*1.6)} ${f(cy+Math.sin(a)*r*1.6)}L${f(cx+Math.cos(a)*r*2.6)} ${f(cy+Math.sin(a)*r*2.6)}`;}return `<circle cx="${f(cx)}" cy="${f(cy)}" r="${f(r)}" fill="${c}"/><path d="${d}" stroke="${c}" stroke-width="${f(s*0.07)}" stroke-linecap="round"/>`;}
+  if(k==="temp")return `<rect x="${f(x+s*0.42)}" y="${f(y+s*0.06)}" width="${f(s*0.16)}" height="${f(s*0.62)}" rx="${f(s*0.08)}" fill="none" stroke="${c}" stroke-width="${f(s*0.07)}"/><circle cx="${f(x+s*0.5)}" cy="${f(y+s*0.78)}" r="${f(s*0.15)}" fill="${c}"/>`;
+  return pictoIcon(k,x,y,s,c);
+}
+function cuidadoShip(x,y,g,ink,paper){
+  const w=g.cuidW,h=g.cuidH,split=h*0.5,fit=(t,cap,wt,max)=>{const l=tw(t,cap/CAPR.head,wt);return l>max?cap*max/l:cap;};
+  let s=`<rect x="${f(x)}" y="${f(y)}" width="${f(w)}" height="${f(h)}" fill="none" stroke="${ink}" stroke-width="${f(w*0.02)}"/><rect x="${f(x)}" y="${f(y+split)}" width="${f(w)}" height="${f(h-split)}" fill="${ink}"/>`;
+  const c1=fit("CUIDADO",h*0.2,700,w*0.84),c2=fit("ITEM PARA SAÚDE",h*0.075,700,w*0.84),c3=fit("VIDAS DEPENDEM",h*0.085,700,w*0.8);
+  s+=T(x+w/2,y+h*0.08,"CUIDADO",c1,{fill:ink,anchor:"middle"})+T(x+w/2,y+h*0.08+c1+h*0.06,"ITEM PARA SAÚDE",c2,{fill:ink,anchor:"middle"});
+  ["VIDAS DEPENDEM","DESTE PRODUTO"].forEach((t,i)=>s+=T(x+w/2,y+split+h*0.12+i*c3*1.75,t,c3,{fill:paper,anchor:"middle"}));
+  const sy=y+h+g.cgap,isz=g.stripH,step=w/5;
+  ["fragil","up","sol","seco","temp"].forEach((k,i)=>s+=miniIcon(k,x+i*step+(step-isz)/2,sy,isz,ink));
+  return s;
+}
+function udiBox(x,y,c){return `<rect x="${f(x)}" y="${f(y)}" width="${UDI_W}" height="${UDI_H}" rx="1.2" fill="none" stroke="${c}" stroke-width="0.25" stroke-dasharray="1.2 0.9"/>`+T(x+25,y+7,"UDI",2.6,{w:500,fill:c,anchor:"middle",fam:"body"})+T(x+25,y+11.2,"5x2 cm",1.5,{w:400,fill:c,anchor:"middle",fam:"body"});}
+function inmetroBox(x,y,c){return `<rect x="${f(x)}" y="${f(y)}" width="${INM_W}" height="${INM_H}" fill="none" stroke="${c}" stroke-width="0.35"/>`+T(x+25,y+8.2,"SELO INMETRO",2.3,{fill:c,anchor:"middle"})+T(x+25,y+12.6,"50 × 22,5 mm",1.6,{w:400,fill:c,anchor:"middle",fam:"body"});}
+/* ITF-14 com moldura e zona de silêncio de 10 módulos (GS1), ajustado a uma largura */
+function itfFit(x,y,w,barH,code,ink){
+  const bt=w*0.04,X=(w-2*bt)/140.5,W2=2.5*X,els=[[1,X],[0,X],[1,X],[0,X]];let s="",cx=x+bt+10*X;
+  for(let i=0;i<14;i+=2){const p1=ITF[+code[i]],p2=ITF[+code[i+1]];for(let k=0;k<5;k++){els.push([1,p1[k]==="W"?W2:X]);els.push([0,p2[k]==="W"?W2:X]);}}
+  els.push([1,W2],[0,X],[1,X]);
+  for(const [bar,bw] of els){if(bar)s+=`<rect x="${cx.toFixed(3)}" y="${f(y+bt)}" width="${bw.toFixed(3)}" height="${f(barH)}" fill="${ink}"/>`;cx+=bw;}
+  s+=`<path d="M${f(x)} ${f(y)}h${f(w)}v${f(barH+2*bt)}h${f(-w)}Z M${f(x+bt)} ${f(y+bt)}v${f(barH)}h${f(w-2*bt)}v${f(-barH)}Z" fill="${ink}" fill-rule="evenodd"/>`;
+  return {svg:s,X,h:barH+2*bt};
+}
+/* bloco de código da arte validada: código interno, unidades, lote e ITF-14, tudo proporcional à largura do bloco */
+function shipCode(inp,bw){
+  if(inp.codeMode==="cd"){const w=inp.cdW,h=inp.cdH;return {w,h,rows:1,bc:{kind:"etiqueta",w,h},draw:(x,y,ink)=>labelMarks(x,y,Math.min(w,h),ink).replace(/^/,""),guide:(x,y,lab)=>gZone(x,y,w,h,`etiqueta do CD ${r0(w)} × ${r0(h)} mm`,lab)};}
+  const h=bw*0.613,gt=normGTIN(inp.gtin,14),symW=bw*0.757,barH=bw*0.147,X=(symW-2*symW*0.04)/140.5;
+  return {w:bw,h,rows:1,bc:{kind:"ITF-14",gt,X,mag:X/1.016*100,barH,w:symW,h:barH+2*symW*0.04},
+    draw:(x,y,ink)=>{
+      const px=x+bw*0.086,f1=bw*0.09,f2=bw*0.0535,q=inp.qtd,code=gt.code;
+      let s=`<rect x="${f(x)}" y="${f(y)}" width="${f(bw)}" height="${f(h)}" rx="${f(bw*0.09)}" fill="none" stroke="${ink}" stroke-width="${f(bw*0.0115)}"/>`;
+      s+=T(px,y+bw*0.136-f1*CAPR.head,inp.sku||"0000000000",f1*CAPR.head,{fill:ink});
+      s+=T(px,y+bw*0.203-f2*CAPR.body,`${String(q).padStart(2,"0")} ${q===1?"unidade":"unidades"}`,f2*CAPR.body,{w:400,fam:"body",fill:ink});
+      s+=T(px,y+bw*0.267-f2*CAPR.body,"Lote: COMMYYYY",f2*CAPR.body,{w:400,fam:"body",fill:ink});
+      const I=itfFit(x+(bw-symW)/2,y+bw*0.31,symW,barH,code,ink);s+=I.svg;
+      s+=T(x+bw/2,y+bw*0.31+I.h+bw*0.018,`${code[0]} ${code.slice(1,3)} ${code.slice(3,8)} ${code.slice(8,13)} ${code[13]}`,bw*0.026,{w:400,fam:"body",fill:ink,anchor:"middle"});
+      return s;},
+    guide:(x,y,lab)=>gt.sample?T(x+bw,y-lab*1.5,"código de exemplo",lab,{w:600,fill:GD.zone,anchor:"end"}):""};
+}
+function legalShip(text,pt,width,maxH,gap){
+  const fs=pt/PT,lead=fs*1.32,paras=String(text||"").replace(/\r/g,"").split(/\n\s*\n/).map(p=>p.split("\n").map(x=>x.trim()).filter(Boolean)).filter(p=>p.length);
+  let last=null;
+  for(let cols=1;cols<=2;cols++){
+    const colW=(width-(cols-1)*gap)/cols;if(cols>1&&colW<40)break;
+    const lines=[];paras.forEach((pa,i)=>{if(i)lines.push("");pa.forEach(l=>lines.push(...wrapW(l,fs,400,"body",colW)));});
+    const per=Math.max(1,Math.ceil(lines.length/cols)),h=per*lead;
+    last={cols,colW,lines,per,h,width,fs,lead,pt,fits:h<=maxH+0.01};if(last.fits)return last;
+  }
+  return last;
+}
+function shipName(inp,p,S){
+  const up=t=>inp.caps?String(t).toUpperCase():String(t);
+  const l1=up(inp.nome),l2=up(inp.nome2||"").trim(),f1=S*p.nameK/100,f2=f1*p.name2K/100;
+  const w1=tw(l1,f1,700),w2=l2?tw(l2,f2,400):0,b1=S*1.668,b2=l2?b1+0.465*S:b1;
+  const hasVar=!!inp.var.trim(),ph=S*0.36,vc=ph*0.42,pw=hasVar?tw(inp.var,vc/CAPR.head,700)+ph*0.9:0,py=b2+S*0.3;
+  return {S,l1,l2,f1,f2,w1,w2,b1,b2,hasVar,ph,vc,pw,py,iconW:S*LOGO.iconW/LOGO.h,h:hasVar?py+ph:b2+f2*0.25,w:Math.max(S*LOGO.iconW/LOGO.h,w1,w2,pw)};
+}
+function shipFront(W,H,p,inp){
+  const F=newFace("frente","Face principal",W,H,inp),g=shipBase(W,H,p),m=g.m;F.m=m;F.g=g;const ink=inp.ink,lc=gcap(F);
+  add(F,lockup(m,m,g.lockW,ink));reg(F,"logo","Logo",m,m,g.lockW,g.lockH,{prot:g.prot});gd(F,protGuide(F,m,m,g.lockW,g.lockH,g.prot));
+  let etq=null;
+  if(inp.etq){const z=g.etq,x=W-m-z;etq={w:z,h:z,x,y:m};add(F,labelMarks(x,m,z,ink));gd(F,gZone(x,m,z,z,`área de etiqueta ${r0(z)} × ${r0(z)}`,lc,{dash:"1 4"}));reg(F,"etq","Área de etiqueta",x,m,z,z);}
+  F.d.etq=etq;
+  const cb=shipCode(inp,g.bcW),cbx=W-m-cb.w,cby=H-m-cb.h;add(F,cb.draw(cbx,cby,ink));gd(F,cb.guide(cbx,cby,lc*0.7));reg(F,"codigo","Bloco de código",cbx,cby,cb.w,cb.h);F.d.cb=cb;
+  const PI=shipPictos(m,H-m,g,ink,inp.paper);add(F,PI.svg);reg(F,"pictos","Pictogramas",m,H-m-PI.h,PI.w,PI.h);
+  const S0=Math.max(p.symMin,H*p.sym/100),gapV=S0*0.12,topLim=m+Math.max(g.lockH,etq?etq.h:0)+gapV,botLim=Math.min(cby,H-m-PI.h)-gapV,availW=W-2*m,availH=botLim-topLim;
+  let B=shipName(inp,p,S0);
+  for(let i=0;i<8&&availH>0;i++){const k=Math.min(1,availW/B.w,availH/B.h);if(k>0.995)break;B=shipName(inp,p,B.S*k*0.995);}
+  B.S0=S0;B.k=B.S/S0;F.d.B=B;
+  if(availH<=1){msg(F,"err",`Não sobra altura para o símbolo e o nome no centro: faltam ${r0(1-availH)} mm.`,["central"]);return checkFace(F),F;}
+  if(B.k<0.995)msg(F,"warn",`O nome não coube no tamanho padrão e o bloco central ficou com ${r0(B.k*100)}% (símbolo de ${r1(B.S)} mm em vez de ${r1(S0)} mm). Passe parte do nome para a linha 2 ou abrevie.`,["central"]);
+  const cx=m+availW/2,y0=clamp(H*0.494-B.h/2,topLim,botLim-B.h);
+  add(F,iconD(cx-B.iconW/2,y0,B.S,ink));
+  add(F,T(cx,y0+B.b1-B.f1*CAPR.head,B.l1,B.f1*CAPR.head,{fill:ink,anchor:"middle"}));
+  if(B.l2)add(F,T(cx,y0+B.b2-B.f2*CAPR.head,B.l2,B.f2*CAPR.head,{w:400,fill:ink,anchor:"middle"}));
+  if(B.hasVar){const vx=cx-B.pw/2,vy=y0+B.py;add(F,`<rect x="${f(vx)}" y="${f(vy)}" width="${f(B.pw)}" height="${f(B.ph)}" rx="${f(B.ph*0.2)}" fill="${ink}"/>`+T(cx,vy+(B.ph-B.vc)/2,inp.var,B.vc,{fill:inp.paper,anchor:"middle"}));}
+  reg(F,"central","Símbolo e nome",cx-B.w/2,y0,B.w,B.h);
+  checkFace(F);return F;
+}
+function shipLateral(W,H,p,inp,FR){
+  const F=newFace("lateral","Lateral",W,H,inp),g=shipBase(W,H,p),m=g.m;F.m=m;F.g=g;const ink=inp.ink,lc=gcap(F),fullW=W-2*m,narrow=W<p.narrow;F.d.narrow=narrow;
+  const B=FR.d.B,sk=p.sideK/100;
+  let top=m;
+  if(!narrow){const lx=(W-g.lockW)/2;add(F,lockup(lx,m,g.lockW,ink));reg(F,"logo","Logo",lx,m,g.lockW,g.lockH,{prot:g.prot});gd(F,protGuide(F,lx,m,g.lockW,g.lockH,g.prot));top=m+g.lockH;}
+  let F1=B.f1*sk,F2=B.f2*sk;const w1=tw(B.l1,F1,700),w2=B.l2?tw(B.l2,F2,400):0,nk=Math.min(1,fullW/Math.max(w1,w2,1));F1*=nk;F2*=nk;
+  const lineGap=0.465*B.S*sk*nk,b1=narrow?m+1.03*F1:top+1.245*g.lockH,b2=B.l2?b1+lineGap:b1;
+  add(F,T(W/2,b1-F1*CAPR.head,B.l1,F1*CAPR.head,{fill:ink,anchor:"middle"}));if(B.l2)add(F,T(W/2,b2-F2*CAPR.head,B.l2,F2*CAPR.head,{w:400,fill:ink,anchor:"middle"}));
+  let last=b2;
+  if(B.hasVar){const vf=F2*0.9;last=b2+vf*1.45;add(F,T(W/2,last-vf*CAPR.head,inp.var,vf*CAPR.head,{w:500,fill:ink,anchor:"middle"}));F.d.varF=vf;}
+  const nw=Math.max(w1,w2)*nk;reg(F,"nome","Nome",W/2-nw/2,b1-F1*0.82,nw,last-(b1-F1*0.82));
+  F.d.F1=F1;F.d.F2=F2;F.d.nk=nk;
+  if(nk<0.995)msg(F,"warn",`O nome ficou a ${r0(nk*100)}% do tamanho padrão para caber na largura da lateral.`,["nome"]);
+  const legalTop=narrow?last+0.55*F1:last+0.92*g.lockH;
+  // linha de baixo
+  const stackH=g.cuidH+g.cgap+g.stripH,tops=[];let cb,cbx,cby;
+  const putRight=(x)=>{let yb=H-m;if(inp.inmetro){add(F,inmetroBox(x,yb-INM_H,ink));gd(F,gZone(x,yb-INM_H,INM_W,INM_H,"",lc));reg(F,"inmetro","Selo Inmetro",x,yb-INM_H,INM_W,INM_H);tops.push(yb-INM_H);yb-=INM_H+(narrow?2.5:g.cuidW*0.079);}
+    if(inp.udi){add(F,udiBox(x,yb-UDI_H,ink));reg(F,"udi","Área UDI",x,yb-UDI_H,UDI_W,UDI_H);tops.push(yb-UDI_H);}};
+  const hasRight=inp.udi||inp.inmetro;
+  if(!narrow||!hasRight){
+    cb=shipCode(inp,g.bcW);cbx=W-m-cb.w;cby=H-m-cb.h;
+    const cy=H-m-stackH;add(F,cuidadoShip(m,cy,g,ink,inp.paper));reg(F,"cuidado","Selo CUIDADO",m,cy,g.cuidW,stackH);tops.push(cy);
+    if(hasRight){const x=m+g.cuidW*1.19;putRight(x);if(x+UDI_W>cbx-g.cuidW*0.1)msg(F,"err",`A linha de baixo não cabe: CUIDADO, UDI/Inmetro e código precisam de ${r0(x+UDI_W-m+g.cuidW*0.1+cb.w)} mm e a lateral tem ${r0(fullW)} mm úteis.`,["udi","inmetro","codigo"]);}
+  }else{
+    const colW=fullW-INM_W-3,bw=Math.min(g.bcW,colW);cb=shipCode(inp,bw);cbx=m;cby=H-m-cb.h;
+    putRight(W-m-INM_W);
+    const cy=cby-2.5-stackH;add(F,cuidadoShip(m,cy,g,ink,inp.paper));reg(F,"cuidado","Selo CUIDADO",m,cy,g.cuidW,stackH);tops.push(cy);
+    if(bw<g.bcW-0.05)msg(F,"warn",`Na lateral estreita sobram ${r0(colW)} mm ao lado de UDI e Inmetro, então o bloco de código ficou com ${r0(bw)} mm em vez de ${r0(g.bcW)} mm.`,["codigo"]);
+  }
+  add(F,cb.draw(cbx,cby,ink));gd(F,cb.guide(cbx,cby,lc*0.7));reg(F,"codigo","Bloco de código",cbx,cby,cb.w,cb.h);F.d.cb=cb;tops.push(cby);
+  const rowTop=Math.min(...tops),gap=m*0.5;
+  // texto legal e área de etiqueta
+  let colW=fullW,etq=null;
+  if(!narrow&&inp.etq){const z=g.etq;etq={x:W-m-z,y:legalTop,w:z,h:z};colW=fullW-z-m;}
+  const LG=legalShip(inp.legal,g.legalPt,colW,rowTop-gap-legalTop,gap);
+  if(LG.lines.some(Boolean)){add(F,drawLegal(m,legalTop,LG,gap,ink));reg(F,"legal","Texto legal",m,legalTop,LG.width,LG.h,LG.fits?{}:{zone:true});}
+  gd(F,`<rect x="${f(m)}" y="${f(legalTop)}" width="${f(LG.width)}" height="${f(Math.max(LG.h,0))}" fill="none" stroke="${GD.zone}" ${GS} stroke-dasharray="2 3"/>`);
+  if(!LG.fits)msg(F,"err",`O texto legal precisa de ${r0(LG.h)} mm de altura e só há ${r0(Math.max(0,rowTop-gap-legalTop))} mm entre o nome e a linha de baixo. Encurte o texto ou aumente a face.`,["legal"]);
+  else if(LG.cols>1)msg(F,"info",`O texto legal foi dividido em ${LG.cols} colunas para caber.`,["legal"]);
+  if(etq){add(F,labelMarks(etq.x,etq.y,etq.w,ink));gd(F,gZone(etq.x,etq.y,etq.w,etq.h,`área de etiqueta ${r0(etq.w)} × ${r0(etq.h)}`,lc,{dash:"1 4"}));reg(F,"etq","Área de etiqueta",etq.x,etq.y,etq.w,etq.h);}
+  F.d.etq=etq;F.d.LG=LG;F.d.g=g;
+  checkFace(F);return F;
+}
+function buildRowsShip(M){
+  const {inp,faces,p}=M,fr=faces[0],si=faces[1],F=faces,rows=[],dash=cell("—"),R=(l,c,k)=>rows.push([l,c,k||""]),pt=mm=>mm*PT,B=fr.d.B;
+  const ext=inp.medida==="interna"?`interna + 2 × ${r1(inp.esp)} mm`:"";
+  R("Face (painel impresso)",F.map(x=>cell(`${r0(x.W)} × ${r0(x.H)} mm`,ext,"",[x.W,x.H,"mm"])));
+  R("Menor lado (base das regras)",F.map(x=>cell(`${r0(x.g.b)} mm`,"","",[x.g.b,null,"mm"])));
+  R("Margem de segurança",F.map(x=>cell(r1(x.m)+" mm","","",[x.m,null,"mm"])));
+  R("Logo (largura × altura)",[cell(`${r1(fr.g.lockW)} × ${r1(fr.g.lockH)} mm`,"",fr.g.logoAtMin?"no mínimo":"",[fr.g.lockW,fr.g.lockH,"mm"]),si.d.narrow?cell("sem logo","lateral estreita"):cell(`${r1(si.g.lockW)} × ${r1(si.g.lockH)} mm`,"",si.g.logoAtMin?"no mínimo":"",[si.g.lockW,si.g.lockH,"mm"])],"logo");
+  R("Área de etiqueta",F.map(x=>x.d.etq?cell(`${r1(x.d.etq.w)} × ${r1(x.d.etq.h)} mm`,"quadrado com cantoneiras","",[x.d.etq.w,x.d.etq.h,"mm"]):dash),"etq");
+  if(B){
+    R("Símbolo D (altura)",[cell(r1(B.S)+" mm",B.k<0.995?`padrão seria ${r1(B.S0)} mm`:"",B.k<0.995?`reduzido a ${r0(B.k*100)}%`:"",[B.S,null,"mm"]),dash],"central");
+    R("Nome – linha 1 (negrito)",[cell(`≈ ${r1(pt(B.f1))} pt`,B.l1,"",[pt(B.f1),null,"pt"]),cell(`≈ ${r1(pt(si.d.F1||0))} pt`,si.d.nk<0.995?"reduzido para caber":"","",[pt(si.d.F1||0),null,"pt"])],"central,nome");
+    if(B.l2)R("Nome – linha 2 (regular)",[cell(`≈ ${r1(pt(B.f2))} pt`,B.l2,"",[pt(B.f2),null,"pt"]),cell(`≈ ${r1(pt(si.d.F2||0))} pt`,"","",[pt(si.d.F2||0),null,"pt"])],"central,nome");
+    if(B.hasVar)R("Variação",[cell(`tarja ${r1(B.pw)} × ${r1(B.ph)} mm`),cell(`≈ ${r1(pt(si.d.varF||0))} pt`)],"central,nome");
+  }
+  R("Pictogramas",[cell(`${r1(fr.g.picto)} mm cada`,`empilhamento ${r1(fr.g.stackW)} × ${r1(fr.g.stackH)} mm · tag ${r1(fr.g.tagH)} mm`,"",[fr.g.picto,null,"mm"]),dash],"pictos");
+  const cbc=x=>{const c=x.d.cb;if(!c)return dash;const b=c.bc;if(b.kind==="etiqueta")return cell(`etiqueta do CD ${r0(b.w)} × ${r0(b.h)} mm`,"","",[b.w,b.h,"mm"]);
+    const fl=[b.gt&&b.gt.sample?"código de exemplo":"",c.w<x.g.bcW-0.05?"reduzido":""].filter(Boolean).join(" · ");
+    return cell(`${r1(c.w)} × ${r1(c.h)} mm`,`ITF-14 a ${r0(b.mag)}% · módulo ${b.X.toFixed(2).replace(".",",")} mm · barras ${r1(b.barH)} mm`,fl,[c.w,c.h,"mm"]);};
+  R("Bloco de código",F.map(cbc),"codigo");
+  const LG=si.d.LG;
+  R("Texto legal",[dash,LG?cell(`${r1(LG.pt)} pt · ${LG.lines.filter(Boolean).length} linhas`,`${LG.cols} ${LG.cols>1?"colunas":"coluna"} de ${r0(LG.colW)} mm · altura ${r0(LG.h)} mm`,si.g.legalAtMin?"corpo mínimo":"",[LG.pt,LG.lines.filter(Boolean).length,"pt / linhas"]):dash],"legal");
+  R("Selo CUIDADO",[dash,cell(`${r1(si.g.cuidW)} × ${r1(si.g.cuidH)} mm`,`faixa de símbolos ${r1(si.g.stripH)} mm`,"",[si.g.cuidW,si.g.cuidH,"mm"])],"cuidado");
+  R("UDI / Inmetro",[dash,cell((inp.udi?"UDI 50 × 20 mm":"sem UDI")+(inp.inmetro?" · Inmetro 50 × 22,5 mm":""),"tamanho fixo","",[inp.udi?50:null,inp.udi?20:null,"mm"])],"udi,inmetro");
+  R("Layout da lateral",[dash,cell(si.d.narrow?"estreita":"larga",si.d.narrow?`menos de ${r0(p.narrow)} mm: sem logo e sem área de etiqueta`:`${r0(p.narrow)} mm ou mais`)]);
+  return {cols:F.map(x=>x.title),rows};
+}
+
 /* ---------- modelo ---------- */
-const FIELDS=["c","l","a","medida","esp","nome","caps","var","qtd","sku","gtin","acab","namePos","nben","benStyle","medpro","destaque","garantia","codeMode","cdW","cdH","inmetro","udi","etq","etqW","etqH","legal","drive"];
+const FIELDS=["c","l","a","medida","esp","nome","nome2","caps","var","qtd","sku","gtin","acab","namePos","nben","benStyle","medpro","destaque","garantia","codeMode","cdW","cdH","inmetro","udi","etq","etqW","etqH","legal","drive"];
 function readForm(){const o={};FIELDS.forEach(k=>{const e=$(k);o[k]=e.type==="checkbox"?e.checked:(e.type==="number"||k==="nben"?(e.value===""?"":+e.value):e.value);});return o;}
 function writeForm(o){FIELDS.forEach(k=>{const e=$(k);if(o[k]===undefined)return;if(e.type==="checkbox")e.checked=!!o[k];else e.value=o[k];});}
 function formOf(rec,type){return {...TYPES[type].start,...LEGACY,legal:LEGAL_SAMPLE[type],...rec};}
 function inputsFrom(o,type){
   const branco=type==="unitaria"&&o.acab==="branco",esp=Math.max(0,+o.esp||0),add2=o.medida==="interna"?2*esp:0;
   return {...o,C:(+o.c||0)+add2,L:(+o.l||0)+add2,A:(+o.a||0)+add2,raw:{c:+o.c||0,l:+o.l||0,a:+o.a||0},add2,esp,
-    nome:String(o.nome||"").trim()||"Nome do produto",var:String(o.var||""),qtd:Math.max(1,+o.qtd||1),nben:+o.nben||4,
+    nome:String(o.nome||"").trim()||"Nome do produto",nome2:String(o.nome2||""),var:String(o.var||""),qtd:Math.max(1,+o.qtd||1),nben:+o.nben||4,
     etqW:Math.max(20,+o.etqW||100),etqH:Math.max(20,+o.etqH||150),cdW:Math.max(20,+o.cdW||100),cdH:Math.max(20,+o.cdH||50),
     sku:String(o.sku||""),gtin:String(o.gtin||""),legal:String(o.legal||""),destaque:String(o.destaque||""),garantia:String(o.garantia||""),
     branco,paper:branco?BR.white:BR.kraft,ink:branco?BR.navy:BR.kraftInk};
@@ -856,14 +1057,19 @@ function computeFor(o,type,p){
   if(!(inp.raw.c>=20&&inp.raw.l>=20&&inp.raw.a>=20))return {invalid:true,inp,type};
   let faces;
   if(type==="unitaria")faces=[unitFront(inp.C,inp.A,p,inp),lateral(inp.L,inp.A,p,inp,"unitaria"),unitTop(inp.C,inp.L,p,inp)];
-  else{const fr=masterFront(inp.C,inp.A,p,inp);faces=[fr,lateral(inp.L,inp.A,p,inp,"master",fr.d.B.N.cap)];}
+  else{const fr=shipFront(inp.C,inp.A,p,inp);faces=[fr,shipLateral(inp.L,inp.A,p,inp,fr)];}
   faces.forEach((F,i)=>F.idx=i);
   const msgs=[],cb=faces[0].d.cb,cm=(level,text)=>msgs.push({level,face:"Código",text,F:null,ids:["codigo"]});
   if(cb&&cb.bc.gt){
     if(cb.bc.gt.bad||!cb.bc.gt.ok)cm("err",`O ${cb.bc.kind==="EAN-13"?"EAN-13":"DUN-14"} digitado não é válido (${cb.bc.gt.bad?"quantidade de dígitos":"dígito verificador"}). O desenho usa um código de exemplo.`);
     if(cb.bc.kind==="EAN-13"&&(p.magEAN<80||p.magEAN>200))cm("err",`EAN-13 a ${r0(p.magEAN)}% está fora da faixa GS1 (80% a 200%).`);
-    if(type==="master"&&cb.bc.kind==="ITF-14"&&cb.h>inp.A*0.45)cm("info",`Nesta master o bloco do ITF-14 ocupa ${r0(cb.h/inp.A*100)}% da altura da face. Vale considerar a etiqueta térmica do CD, que pede só a área da etiqueta.`);
-    if(cb.bc.kind==="ITF-14"&&p.magITF<62.5)cm("warn",`ITF-14 a ${r1(p.magITF)}% impresso direto no papelão fica abaixo dos 62,5% que a GS1 pede para leitura automática.`);
+  }
+  if(type==="master"){
+    const its=faces.map(F=>F.d.cb).filter(c=>c&&c.bc.kind==="ITF-14");
+    if(its.length){const c=its.reduce((a,b)=>a.bc.mag<b.bc.mag?a:b).bc;
+      const mx=c.X.toFixed(2).replace(".",",");
+      if(c.mag<p.itfMin)cm("warn",`O menor ITF-14 desta caixa sai a ${r0(c.mag)}% (módulo de ${mx} mm), abaixo dos ${r0(p.itfMin)}% que a GS1 aceita até para leitor de mão. Aumente o bloco de código ou use a etiqueta do CD.`);
+      else if(c.mag<62.5||c.barH<31.75)cm("info",`O menor ITF-14 desta caixa sai a ${r0(c.mag)}% (módulo de ${mx} mm) com barras de ${r1(c.barH)} mm. Funciona com leitor de mão; para leitura automática impressa direto no papelão, a GS1 pede 62,5% e 31,75 mm de altura.`);}
   }
   faces.forEach(F=>msgs.push(...F.msgs));
   return {inp,p,faces,msgs,type};
@@ -967,6 +1173,7 @@ function apply3D(){$("box3d").style.transform=`rotateX(${ANG.rx}deg) rotateY(${A
 /* ---------- tabela ---------- */
 const cell=(v,sub,flag,n)=>({v,sub,flag,n});
 function buildRows(M){
+  if(M.type==="master")return buildRowsShip(M);
   const {inp,faces}=M,fr=faces[0],si=faces[1],tp=faces[2],rows=[],unit=M.type==="unitaria",F=faces,dash=cell("—");
   const R=(label,cells,keys)=>rows.push([label,cells,keys||""]);
   const ext=inp.medida==="interna"?`interna + 2 × ${r1(inp.esp)} mm`:"",pt=c=>c/CAPR.head*PT;
@@ -1033,7 +1240,7 @@ function updateCounts(n){const c=$("prevCount");c.hidden=!n;c.textContent=`${n} 
 function syncChips(){
   const isSample=$("legal").value.trim()===LEGAL_SAMPLE[TYPE].trim(),c=$("legalChip");
   c.className="chip"+(isSample?" confirm":"");c.textContent=isSample?"texto de exemplo":(c.dataset.lines?`texto real · ${c.dataset.lines} linhas`:"texto real");
-  const n=[...COMMON,...TYPES[TYPE].extra].filter(([k])=>Math.abs((PRM[TYPE][k]??0)-(TEAMDEF[TYPE][k]??0))>1e-9).length,rc=$("rulesChip");
+  const n=PARAMS(TYPE).filter(([k])=>Math.abs((PRM[TYPE][k]??0)-(TEAMDEF[TYPE][k]??0))>1e-9).length,rc=$("rulesChip");
   rc.hidden=!n;rc.className="chip confirm";rc.textContent=`${n} ${n===1?"alterada":"alteradas"}`;
 }
 function fieldErrors(){
@@ -1062,8 +1269,10 @@ function syncFormUI(){
   $("opts-unitaria").hidden=!unit;$("opts-master").hidden=unit;$("opts-master-prod").hidden=unit;
   $("gtinLabel").textContent=unit?"EAN-13":"DUN-14";
   $("cdDims").hidden=unit||o.codeMode!=="cd";
-  $("etqDims").hidden=!o.etq;$("etqNote").hidden=!o.etq;
-  $("etqNote").textContent=unit?"Na unitária, reservada só na lateral, para não ocupar a face de venda.":"Reservada no canto superior direito da face principal e na lateral, acima do código ou ao lado do texto legal. Gira sozinha se couber melhor deitada.";
+  $("etqDims").hidden=!o.etq||!unit;$("etqNote").hidden=!o.etq;
+  $("etqLabel").textContent=unit?"Etiqueta de transportadora":"Área de etiqueta com cantoneiras";
+  $("etqNote").textContent=unit?"Na unitária, reservada só na lateral, para não ocupar a face de venda.":"Quadrado de 25% do menor lado (mín. 40 mm), no canto superior direito da frente e ao lado do texto legal na lateral larga.";
+  $("nome2Box").hidden=unit;$("shipEx").hidden=unit;$("nomeLabel").textContent=unit?"Nome do produto":"Nome – linha 1 (negrito)";
   const isSample=o.legal.trim()===LEGAL_SAMPLE[TYPE].trim();
   $("legalNote").textContent=isSample?"Texto de exemplo com dados genéricos. Cole o texto legal real para a altura sair exata.":`${o.legal.length} caracteres.`;
   $("legalReset").hidden=isSample;
@@ -1142,7 +1351,7 @@ $("goForm").addEventListener("click",()=>$("form").scrollIntoView({behavior:RM()
 /* ---------- regras (parâmetros) ---------- */
 function buildParams(){
   const pe=$("params");pe.innerHTML="";
-  [...COMMON,...TYPES[TYPE].extra].forEach(([k,lab,,st])=>{
+  PARAMS(TYPE).forEach(([k,lab,,st])=>{
     const l=document.createElement("label");l.htmlFor="p_"+k;l.textContent=lab;l.id="pl_"+k;
     const i=document.createElement("input");i.type="number";i.id="p_"+k;i.value=PRM[TYPE][k];i.step=st;
     i.addEventListener("input",()=>{const x=parseFloat(i.value);if(!isNaN(x)&&x>0){PRM[TYPE][k]=x;markParams();render();scheduleHist();}});
@@ -1150,7 +1359,7 @@ function buildParams(){
   });
   markParams();
 }
-function markParams(){[...COMMON,...TYPES[TYPE].extra].forEach(([k])=>{const l=$("pl_"+k);if(l)l.classList.toggle("changed",Math.abs((PRM[TYPE][k]??0)-(TEAMDEF[TYPE][k]??0))>1e-9);});syncChips();}
+function markParams(){PARAMS(TYPE).forEach(([k])=>{const l=$("pl_"+k);if(l)l.classList.toggle("changed",Math.abs((PRM[TYPE][k]??0)-(TEAMDEF[TYPE][k]??0))>1e-9);});syncChips();}
 $("rulesReset").addEventListener("click",()=>{PRM[TYPE]={...TEAMDEF[TYPE]};buildParams();render();$("rulesMsg").textContent="Regras voltaram ao padrão do time.";});
 
 /* ---------- abas e eventos ---------- */
@@ -1220,8 +1429,8 @@ const REQ={
   unitaria:[["Face principal",["Logo Dellamed (canto superior esquerdo), em bloco azul no branco impresso","Tag MED PRO, quando a linha usar","Nome do produto com modelo","Destaque abaixo do nome, quando houver (ex.: capacidade)","Benefícios (2 a 5)","Ilustração ou foto do produto","Pictogramas de manuseio + tag ITEM PARA SAÚDE","Selo de garantia, quando houver","Bloco código: código interno, 1 unidade, lote, fabricação, validade, EAN-13"]],
     ["Lateral",["Logo Dellamed centralizado","Texto legal: detentor do registro, CNPJ/IE, AFE ANVISA, responsável técnico, SAC, endereço, fabricante e endereço do fabricante, registro ANVISA, data de fabricação, validade","Selo CUIDADO / VIDAS DEPENDEM DESTE PRODUTO + faixa de símbolos","Área UDI, quando aplicável","Selo Inmetro, quando o produto exige","Área para etiqueta de transportadora, quando a caixa vai direto ao cliente","Bloco código"]],
     ["Topo / abas",["Logo + nome do produto","Assinatura ESPECIALISTA EM MED no branco impresso"]]],
-  master:[["Face principal",["Logo Dellamed (canto superior esquerdo)","Símbolo D + nome do produto (até 3 linhas) + variação em tarja","Área para etiqueta de transportadora (canto superior direito)","Pictogramas de manuseio + tag ITEM PARA SAÚDE","Bloco código: código interno, quantidade, lote, fabricação, validade, ITF-14 ou etiqueta do CD"]],
-    ["Lateral",["Logo Dellamed centralizado","Nome do produto + variação","Texto legal: data de fabricação, validade, registro ANVISA, detentor do registro, CNPJ, AFE, responsável técnico, SAC, endereço, país de origem","Selo CUIDADO + faixa de símbolos","Área UDI 50 × 20 mm","Selo Inmetro, quando o produto exige","Área para etiqueta de transportadora","Bloco código"]],
+  master:[["Face principal",["Logo Dellamed no canto superior esquerdo","Área de etiqueta com cantoneiras no canto superior direito","Símbolo D e nome centralizados (linha 1 em negrito, linha 2 regular) e variação em tarja, quando houver","Pictogramas: empilhamento máximo, frágil, este lado para cima e tag ITEM PARA SAÚDE","Bloco de código: código interno, quantidade, lote e ITF-14"]],
+    ["Lateral",["Logo centralizado (só na lateral larga)","Nome do produto a 74% da frente","Texto legal: registro Anvisa, fabricação, validade, detentor do registro, CNPJ/IE, AFE, responsável técnico, SAC, endereço, fabricante","Área de etiqueta ao lado do texto legal (só na lateral larga)","Selo CUIDADO com faixa de símbolos","Área UDI 50 × 20 mm","Selo Inmetro 50 × 22,5 mm, quando o produto exige","Bloco de código"]],
     ["Abas",["Lisas (kraft sem impressão)"]]]
 };
 const RULES={
@@ -1231,11 +1440,11 @@ const RULES={
   <p><b>Benefícios</b> em coluna à esquerda: pílulas de altura igual a metade de 12% do lado-base (formato do brandbook) ou círculos de 12%. Se a coluna não cabe, encolhem até o mínimo e a ferramenta avisa.</p>
   <p><b>Código</b> é um EAN-13 no tamanho GS1 (100% = 37,29 × 25,93 mm, permitido de 80% a 200%), sem cortar a altura das barras. Acima dele, uma linha de código interno e os campos de lote, fabricação e validade sempre no mesmo formato.</p>
   <p><b>Texto legal</b> é medido em Open Sans com o texto do campo "Texto legal". Se não couber em uma coluna, vira 2 ou 3. Com etiqueta de transportadora, a ferramenta tenta primeiro a etiqueta acima do código e depois ao lado do texto.</p>`,
-  master:`<p><b>A master não vende, ela é lida no estoque.</b> Por isso o nome e a variação ficam no centro e maiores que o logo, e o código é pensado para leitor automático.</p>
-  <p><b>Símbolo central</b> é o ícone D do brandbook com 12% da altura da face. Nome com maiúscula a 35% do símbolo, até 3 linhas, variação em tarja logo abaixo. Se não couber, o bloco inteiro é recalculado menor e a tabela mostra o tamanho real.</p>
-  <p><b>ITF-14</b> tem barras de 31,75 mm de altura em qualquer tamanho; só a largura muda. Impresso direto no papelão, a GS1 pede no mínimo 62,5% para leitura automática e moldura de proteção (bearer bar), o que dá cerca de 95 mm de largura total. Na opção "etiqueta térmica do CD", o código impresso sai e fica reservada a área da etiqueta (padrão 100 × 50 mm).</p>
-  <p><b>Etiqueta de transportadora</b> fica no canto superior direito da face principal e, na lateral, acima do código ou ao lado do texto legal. O padrão é 100 × 150 mm.</p>
-  <p><b>Lateral</b> segue o mesmo esqueleto da unitária: logo no topo, texto legal medido, linha de baixo com selo CUIDADO, UDI, Inmetro quando houver e código à direita.</p>`
+  master:`<p><b>Uma regra só para master e transporte.</b> As proporções saem das artes validadas do Termômetro Infravermelho (master 166 × 103 × 150 e transporte 348 × 328 × 320). Cada elemento é uma porcentagem do menor lado da face, com um mínimo. Na transporte quase tudo segue a porcentagem; na master os mínimos entram em ação, por isso logo, código e pictogramas ficam proporcionalmente maiores.</p>
+  <p><b>Frente:</b> logo no canto superior esquerdo com 7,3% do menor lado de altura (mínimo 12 mm). Área de etiqueta quadrada no canto superior direito com 25% do menor lado (mínimo 40 mm). Símbolo D com 12,3% da altura da face (mínimo 19,5 mm) e o nome embaixo, centralizados: linha 1 em negrito com corpo de 47,6% do D, linha 2 regular com 85% da linha 1. Pictogramas com 7% do menor lado (mínimo 13 mm) no canto inferior esquerdo e bloco de código com 25% (mínimo 45 mm) no inferior direito.</p>
+  <p><b>Lateral larga:</b> logo centralizado, nome a 74% da frente, texto legal à esquerda e área de etiqueta à direita. Na linha de baixo, selo CUIDADO (11%, mínimo 20 mm), UDI 50 × 20 sobre o selo Inmetro 50 × 22,5 e o bloco de código.</p>
+  <p><b>Lateral estreita</b> (menos de 150 mm de largura): sem logo e sem área de etiqueta. Embaixo, CUIDADO sobre o bloco de código à esquerda e UDI sobre o selo Inmetro à direita.</p>
+  <p><b>Margem:</b> 6,25% do menor lado, mínimo 8 mm. <b>Texto legal:</b> 5% do menor lado em pt, entre 6 e 12 pt, com linha em branco entre parágrafos. <b>Código:</b> o bloco inteiro escala pela largura; o ITF-14 dentro dele segue a GS1, com zona de silêncio de 10 módulos.</p>`
 };
 
 /* ---------- biblioteca compartilhada e histórico de medidas ---------- */
@@ -1246,7 +1455,7 @@ const THUMB=new Map();
 function thumbFor(rec,type){
   const key=type+"|"+rec.id+"|"+(rec.atualizadoEm||rec.em||"");if(THUMB.has(key))return THUMB.get(key);
   let svg="";
-  try{const M=computeFor(formOf(rec,type),type,{...TEAMDEF[type],...(rec.regras||{})});if(!M.invalid){const F=M.faces[0],k=56/Math.max(F.W,F.H);svg=faceSVG(F,{pad:0}).replace("<svg ",`<svg width="${f(F.W*k)}" height="${f(F.H*k)}" `);}}catch(e){}
+  try{const M=computeFor(formOf(rec,type),type,{...TEAMDEF[type],...(rulesOk(rec,type)?rec.regras||{}:{})});if(!M.invalid){const F=M.faces[0],k=56/Math.max(F.W,F.H);svg=faceSVG(F,{pad:0}).replace("<svg ",`<svg width="${f(F.W*k)}" height="${f(F.H*k)}" `);}}catch(e){}
   THUMB.set(key,svg);return svg;
 }
 function ago(iso){const t=Date.parse(iso);if(!t)return "";const s=(Date.now()-t)/1000;if(s<60)return "agora";if(s<3600)return `há ${Math.floor(s/60)} min`;if(s<86400)return `há ${Math.floor(s/3600)} h`;if(s<172800)return "ontem";return fmtDate(iso);}
@@ -1273,7 +1482,7 @@ function renderLib(){
   document.querySelectorAll("[data-list]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.list===LIST?"true":"false"));
   const on=LIBSTATE==="on";
   $("saveActions").hidden=!on;$("driveSec").hidden=!on;$("rulesSaveTeam").hidden=!on;
-  const terms=norm($("busca").value).split(/\s+/).filter(Boolean),match=b=>{const hay=norm(`${b.nome} ${b.var||""} ${b.sku||""}`);return terms.every(t=>hay.includes(t));};
+  const terms=norm($("busca").value).split(/\s+/).filter(Boolean),match=b=>{const hay=norm(`${b.nome} ${b.nome2||""} ${b.var||""} ${b.sku||""}`);return terms.every(t=>hay.includes(t));};
   const ofType=(BOXES||[]).filter(b=>b.tipo===TYPE),live=ofType.filter(b=>!b.excluido),trash=ofType.filter(b=>b.excluido);
   const hl=(histList()||[]).filter(h=>h.tipo===TYPE);
   $("libCount").textContent=on&&BOXES?` ${live.length}`:"";$("histCount").textContent=histList()?` ${hl.length}`:"";
@@ -1293,7 +1502,7 @@ function renderLib(){
       const hist=H.length?`<details><summary>Facas anteriores (${H.length})</summary>${H.slice().reverse().map(h=>`<div class="dim">${r0(h.c)} × ${r0(h.l)} × ${r0(h.a)} mm${b.tipo==="master"?` · ${esc(h.qtd)} un.`:""} · até ${esc(fmtDate(h.ate))}${h.por&&NAMES[h.por]?" · "+esc(NAMES[h.por]):""}</div>`).join("")}</details>`:"";
       const drive=/^https:\/\//.test(b.drive||"")?` · <a href="${esc(b.drive)}" target="_blank" rel="noopener">arte pronta</a>`:"";
       const acts=SHOWTRASH?`<button class="act" type="button" data-restore="${esc(b.id)}">Restaurar</button><button class="act" type="button" data-purge="${esc(b.id)}">Apagar de vez</button>`:`<button class="act" type="button" data-del="${esc(b.id)}" aria-label="Mover ${esc(b.nome)} para a lixeira">Excluir</button>`;
-      return card({cur:CURRENT[TYPE]===b.id,attr:`data-id="${esc(b.id)}"`,disabled:SHOWTRASH,hint:"Abrir esta caixa",thumb:thumbFor(b,TYPE),title:`${b.nome}${b.var?" · "+b.var:""}`,
+      return card({cur:CURRENT[TYPE]===b.id,attr:`data-id="${esc(b.id)}"`,disabled:SHOWTRASH,hint:"Abrir esta caixa",thumb:thumbFor(b,TYPE),title:`${b.nome}${b.nome2?" "+b.nome2:""}${b.var?" · "+b.var:""}`,
         dims:`${r0(b.c)} × ${r0(b.l)} × ${r0(b.a)} mm${b.medida==="interna"?" int.":""}${b.tipo==="master"?` · ${esc(b.qtd)} un.`:""}`,meta:`${esc(fmtDate(SHOWTRASH?b.excluidoEm:b.atualizadoEm))}${who}${drive}`,acts,extra:hist});
     }).join("");
     resolveNames(list);return;
@@ -1301,7 +1510,7 @@ function renderLib(){
   if(!histList())return empty("Carregando o histórico…");
   const list=hl.filter(match);
   if(!list.length)return empty(terms.length?"Nenhuma medida com esses termos.":"Ainda não há medidas no histórico. Elas aparecem aqui sozinhas quando alguém preenche uma caixa.");
-  el.innerHTML=list.map(h=>card({attr:`data-use="${esc(h.id)}"`,hint:"Usar estas medidas",thumb:thumbFor(h,TYPE),title:`${h.nome}${h.var?" · "+h.var:""}`,
+  el.innerHTML=list.map(h=>card({attr:`data-use="${esc(h.id)}"`,hint:"Usar estas medidas",thumb:thumbFor(h,TYPE),title:`${h.nome}${h.nome2?" "+h.nome2:""}${h.var?" · "+h.var:""}`,
     dims:`${r0(h.c)} × ${r0(h.l)} × ${r0(h.a)} mm${h.medida==="interna"?" int.":""}${h.tipo==="master"?` · ${esc(h.qtd)} un.`:""}`,
     meta:`${esc(ago(h.em))}${h.por&&NAMES[h.por]?" · "+esc(NAMES[h.por]):""}${h.vezes>1?` · ${h.vezes}×`:""}`,
     acts:`<button class="act" type="button" data-hdel="${esc(h.id)}" aria-label="Remover ${esc(h.nome)} do histórico">Remover</button>`})).join("");
@@ -1315,6 +1524,8 @@ async function resolveNames(list){
 }
 document.querySelectorAll("[data-list]").forEach(b=>b.addEventListener("click",()=>{LIST=b.dataset.list;SHOWTRASH=false;renderLib();}));
 $("busca").addEventListener("input",renderLib);
+$("shipEx").addEventListener("click",e=>{const b=e.target.closest("[data-ex]");if(!b)return;const ex=SHIP_EX[b.dataset.ex];
+  askDiscard(ex.label,()=>{CURRENT.master=null;FROMHIST.master=null;const {label,...vals}=ex;writeForm({...TYPES.master.start,legal:LEGAL_SAMPLE.master,...vals});PRM.master={...TEAMDEF.master};buildParams();SNAP.master=snapOf();render();renderLib();$("savemsg").textContent=`Exemplo carregado: ${label}.`;});});
 $("trashToggle").addEventListener("click",()=>{SHOWTRASH=!SHOWTRASH;renderLib();});
 function askDiscard(name,fn){
   if(!updateDirty())return fn();
@@ -1325,7 +1536,7 @@ function askDiscard(name,fn){
 }
 function loadRec(rec,isBox){
   CURRENT[TYPE]=isBox?rec.id:null;FROMHIST[TYPE]=isBox?null:`${rec.nome}${rec.var?" · "+rec.var:""}`;
-  writeForm(formOf(rec,TYPE));PRM[TYPE]={...TEAMDEF[TYPE],...(rec.regras||{})};
+  writeForm(formOf(rec,TYPE));PRM[TYPE]={...TEAMDEF[TYPE],...(rulesOk(rec,TYPE)?rec.regras||{}:{})};
   buildParams();SNAP[TYPE]=snapOf();PENDING=null;$("pending").hidden=true;render();renderLib();
   $("savemsg").textContent=isBox?"":"Medidas do histórico carregadas.";
 }
@@ -1366,7 +1577,7 @@ async function saveBox(asNew){
   if(historico.length>12)historico.splice(0,historico.length-12);
   const doc={tipo:TYPE,...fm,c:+fm.c,l:+fm.l,a:+fm.a,esp:+fm.esp||0,qtd:TYPE==="master"?Math.max(1,+fm.qtd||1):1,var:TYPE==="master"?fm.var.trim():"",nome:fm.nome.trim(),drive:fm.drive.trim(),
     nben:+fm.nben,cdW:+fm.cdW||100,cdH:+fm.cdH||50,etqW:+fm.etqW||100,etqH:+fm.etqH||150,
-    regras:{...PRM[TYPE]},proporcoes:LAST?{colunas:LAST.cols,linhas:LAST.rows.map(([n,v])=>({elemento:n,valores:v.map(c=>[c.v,c.sub,c.flag].filter(Boolean).join(" · "))}))}:null,
+    regras:{...PRM[TYPE]},regrasV:RULES_V[TYPE],proporcoes:LAST?{colunas:LAST.cols,linhas:LAST.rows.map(([n,v])=>({elemento:n,valores:v.map(c=>[c.v,c.sub,c.flag].filter(Boolean).join(" · "))}))}:null,
     historico,excluido:false,criadoEm:cur&&cur.criadoEm?cur.criadoEm:now,atualizadoEm:now,salvoPor:UID};
   ["save","saveNew"].forEach(i=>$(i).disabled=true);$("savemsg").textContent="Salvando…";
   try{await DB.collection("caixas").doc(id).set(doc);CURRENT[TYPE]=id;FROMHIST[TYPE]=null;SNAP[TYPE]=snapOf();clearTimeout(histT);
@@ -1376,10 +1587,10 @@ async function saveBox(asNew){
 }
 $("save").addEventListener("click",()=>saveBox(false));
 $("saveNew").addEventListener("click",()=>saveBox(true));
-$("novo").addEventListener("click",()=>{CURRENT[TYPE]=null;FROMHIST[TYPE]=null;writeForm({...TYPES[TYPE].start,nome:"",var:"",sku:"",gtin:"",drive:""});PRM[TYPE]={...TEAMDEF[TYPE]};buildParams();SNAP[TYPE]=snapOf();render();renderLib();$("savemsg").textContent="";$("c").focus();});
+$("novo").addEventListener("click",()=>{CURRENT[TYPE]=null;FROMHIST[TYPE]=null;writeForm({...TYPES[TYPE].start,nome:"",nome2:"",var:"",sku:"",gtin:"",drive:"",legal:LEGAL_SAMPLE[TYPE]});PRM[TYPE]={...TEAMDEF[TYPE]};buildParams();SNAP[TYPE]=snapOf();render();renderLib();$("savemsg").textContent="";$("c").focus();});
 /* histórico automático: grava a medida depois de 3 s sem edição; a mesma caixa medida de novo atualiza a entrada em vez de duplicar */
 function fnv(t){let h=2166136261;for(let i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0).toString(36);}
-function histId(o,type){return `h-${type}-${fnv([type,+o.c,+o.l,+o.a,o.medida,o.medida==="interna"?+o.esp:"",norm(o.nome).trim(),type==="master"?norm(o.var).trim():"",type==="master"?+o.qtd:""].join("|"))}`;}
+function histId(o,type){return `h-${type}-${fnv([type,+o.c,+o.l,+o.a,o.medida,o.medida==="interna"?+o.esp:"",norm(o.nome).trim(),norm(o.nome2).trim(),type==="master"?norm(o.var).trim():"",type==="master"?+o.qtd:""].join("|"))}`;}
 let histT=0,LASTHIST="",pruned=false;
 function scheduleHist(){clearTimeout(histT);histT=setTimeout(recordHist,3000);}
 async function recordHist(){
@@ -1387,7 +1598,7 @@ async function recordHist(){
   const o=readForm();if(!(+o.c>=20&&+o.l>=20&&+o.a>=20)||!String(o.nome).trim())return;
   const sig=JSON.stringify({t:TYPE,o,r:PRM[TYPE]});if(sig===LASTHIST)return;LASTHIST=sig;
   const id=histId(o,TYPE),{drive,...rest}=o,prev=(histList()||[]).find(h=>h.id===id);
-  const doc={tipo:TYPE,...rest,c:+o.c,l:+o.l,a:+o.a,esp:+o.esp||0,qtd:TYPE==="master"?Math.max(1,+o.qtd||1):1,nben:+o.nben,nome:String(o.nome).trim(),var:TYPE==="master"?String(o.var||"").trim():"",regras:{...PRM[TYPE]},em:new Date().toISOString(),por:UID,vezes:((prev&&prev.vezes)||0)+(prev&&prev.em&&Date.now()-Date.parse(prev.em)<600000?0:1)};
+  const doc={tipo:TYPE,...rest,c:+o.c,l:+o.l,a:+o.a,esp:+o.esp||0,qtd:TYPE==="master"?Math.max(1,+o.qtd||1):1,nben:+o.nben,nome:String(o.nome).trim(),var:TYPE==="master"?String(o.var||"").trim():"",regras:{...PRM[TYPE]},regrasV:RULES_V[TYPE],em:new Date().toISOString(),por:UID,vezes:((prev&&prev.vezes)||0)+(prev&&prev.em&&Date.now()-Date.parse(prev.em)<600000?0:1)};
   if(LIBSTATE==="on"&&DB){try{await DB.collection("historico").doc(id).set(doc);pruneHist();}catch(e){}}
   else{const a=localHist().filter(h=>h.id!==id);a.unshift({id,...doc});saveLocalHist(a);renderLib();}
 }
@@ -1400,7 +1611,7 @@ $("rulesSaveTeam").addEventListener("click",async()=>{
   if(!btn.classList.contains("armed")){btn.classList.add("armed");btn.textContent="Confirmar: vale para todo o time";setTimeout(()=>{btn.classList.remove("armed");btn.textContent="Salvar como padrão do time";},4000);return;}
   btn.classList.remove("armed");btn.textContent="Salvar como padrão do time";
   const next={...TEAMDEF,[TYPE]:{...PRM[TYPE]}};
-  try{await DB.doc("config/regras").set({unitaria:next.unitaria,master:next.master,atualizadoEm:new Date().toISOString(),salvoPor:UID});$("rulesMsg").textContent="Padrão do time atualizado. Caixas novas passam a usar estas regras.";}
+  try{await DB.doc("config/regras").set({unitaria:next.unitaria,master:next.master,masterV:2,atualizadoEm:new Date().toISOString(),salvoPor:UID});$("rulesMsg").textContent="Padrão do time atualizado. Caixas novas passam a usar estas regras.";}
   catch(err){$("rulesMsg").textContent=permMsg(err,"mudar o padrão do time");}
 });
 (async()=>{
@@ -1412,7 +1623,7 @@ $("rulesSaveTeam").addEventListener("click",async()=>{
   try{UID=USER&&USER.id?await USER.id():null;}catch(e){UID=null;}
   DB.doc("config/regras").onSnapshot(s=>{
     const d=s.exists?s.data():null,before=JSON.stringify(TEAMDEF);
-    TEAMDEF={unitaria:{...CODE_DEF.unitaria,...(d&&d.unitaria||{})},master:{...CODE_DEF.master,...(d&&d.master||{})}};
+    TEAMDEF={unitaria:{...CODE_DEF.unitaria,...(d&&d.unitaria||{})},master:{...CODE_DEF.master,...(d&&d.masterV===2&&d.master||{})}};
     if(JSON.stringify(TEAMDEF)!==before){["unitaria","master"].forEach(t=>{if(!CURRENT[t]&&JSON.stringify(PRM[t])===JSON.stringify(CODE_DEF[t]))PRM[t]={...TEAMDEF[t]};});if(!CURRENT[TYPE]&&SNAP[TYPE])SNAP[TYPE]=snapOf();THUMB.clear();buildParams();render();renderLib();}
   },()=>{});
   DB.collection("caixas").orderBy("atualizadoEm","desc").onSnapshot(s=>{BOXES=s.docs.map(d=>({id:d.id,...d.data()}));renderLib();},()=>{LIBSTATE="error";renderLib();});
